@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Call</title>
+    <style>
+        video {
+            width: 300px;
+            height: 200px;
+            margin: 10px;
+            background: black;
+        }
+    </style>
+</head>
+<body>
+    <video id="localVideo" autoplay playsinline></video>
+    <video id="remoteVideo" autoplay playsinline></video>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://unpkg.com/simple-peer/simplepeer.min.js"></script>
+    <script>
+        const socket = io();
+
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
+
+        const peer = new SimplePeer({
+            initiator: location.hash === '#init',
+            trickle: false
+        });
+
+        peer.on('signal', data => {
+            socket.emit('signal', data);
+        });
+
+        socket.on('signal', data => {
+            peer.signal(data);
+        });
+
+        peer.on('stream', stream => {
+            remoteVideo.srcObject = stream;
+        });
+
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+            localVideo.srcObject = stream;
+            peer.addStream(stream);
+        }).catch(error => console.error('Error accessing media devices.', error));
+    </script>
+</body>
+</html>
